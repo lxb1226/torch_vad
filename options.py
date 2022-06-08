@@ -3,20 +3,20 @@ import os
 
 
 def parse_common_args(parser):
-    parser.add_argument('--model_type', type=str, default='base_model', help='used in model_entry.py')
-    parser.add_argument('--data_type', type=str, default='base_dataset', help='used in data_entry.py')
+    parser.add_argument('--model_type', type=str, default='dnn_vad', help='used in model_entry.py')
+    parser.add_argument('--data_type', type=str, default='list', help='used in data_entry.py')
     parser.add_argument('--save_prefix', type=str, default='pref', help='some comment for model or test result dir')
     parser.add_argument('--load_model_path', type=str, default='checkpoints/base_model_pref/0.pth',
                         help='model path for pretrain or test')
     parser.add_argument('--load_not_strict', action='store_true', help='allow to load only common state dicts')
-    parser.add_argument('--val_list', type=str, default='/data/dataset1/list/base/val.txt',
+    parser.add_argument('--val_list', type=str, default='../../data/wav_lists/val.txt',
                         help='val list in train, test list path in test')
     parser.add_argument('--gpus', nargs='+', type=int)
     parser.add_argument('--seed', type=int, default=1234)
 
     parser.add_argument('--sample_rate', type=int, default=8000)
-    parser.add_argument('--win_len', default=10, type=float, help='FFT duration in ms')
-    parser.add_argument('--hop_len', default=5, type=float, help='hop duration in ms')
+    parser.add_argument('--win_len', default=10, type=int, help='FFT duration in ms')
+    parser.add_argument('--hop_len', default=5, type=int, help='hop duration in ms')
     parser.add_argument('--n_fft', default=2048, type=int)
     parser.add_argument('--n_mels', default=12, type=int)
     return parser
@@ -32,10 +32,10 @@ def parse_train_args(parser):
     parser.add_argument('--weight-decay', '--wd', default=0, type=float,
                         metavar='W', help='weight decay')
     parser.add_argument('--model_dir', type=str, default='', help='leave blank, auto generated')
-    # TODO 待修改
-    parser.add_argument('--train_list', type=str, default='../../data/dataset1/list/base/train.txt')
+    parser.add_argument('--loss', type=str, default='ce', help='loss function')
+    parser.add_argument('--train_list', type=str, default='../../data/wav_lists/train.txt')
     parser.add_argument('--batch_size', type=int, default=16)
-    parser.add_argument('--epochs', type=int, default=100)
+    parser.add_argument('--epochs', type=int, default=20)
 
     return parser
 

@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init as init
-import torchvision
+# import torchvision
 from torch.autograd import Variable
 from torch.nn import LSTM, GRU
 from torch.nn import RNN
@@ -73,37 +73,37 @@ class RruVAD(nn.Module):
 
 # LSTM模型
 '''
-该模型以[20,24]维的数据作为输入，其中20代表帧数，24代表特征点数。
-最终输出[20,1]维的数据。即每帧音频对应一个数值。
+
 '''
 
 
 class LstmVAD(nn.Module):
-    def __init__(self, input_dim, hidden_size):
+    def __init__(self, input_dim, hidden_size, num_layers):
         super(LstmVAD, self).__init__()
+        self.hidden_size = hidden_size
+        self.input_dim = input_dim
+        self.num_layers = num_layers
+        self.lstm = nn.LSTM(input_size=input_dim,
+                            hidden_size=hidden_size, num_layers=num_layers, bias=True, batch_first=False,
+                            bidirectional=True)
+        self.fc = nn.Linear(in_features=2 * hidden_size,
+                            out_features=1, bias=True)
+        self.sigmoid = nn.Sigmoid()
 
-        self.rnn = LSTM(input_size=24, hidden_size=20, num_layers=1, batch_first=True)
-        self.hidden = nn.Linear(20, 10)
-        self.y_hidden1 = nn.Linear(10, 1)
+    def init_hiddens(self, batch_size):
+        # hidden state should be (num_layers*num_directions, batch_size, hidden_size)
+        # returns a hidden state and a cell state
+        return (torch.rand(size=(self.num_layers * 2, batch_size, self.hidden_size)),) * 2
 
-        self._initialize_weights()
-
-    def forward(self, x):
-        r_out, (h_t, c_t) = self.rnn(x, None)
-        print("r_out.shape : {}".format(r_out.shape))
-        y_hat = []
-        for time in range(r_out.size(1)):
-            out = self.hidden(r_out[:, time, :])
-            out = torch.tanh(out)
-            out = self.y_hidden1(out)
-            out = torch.sigmoid(out)
-            y_hat.append(out)
-        return torch.stack(y_hat, dim=1)
-
-    def _initialize_weights(self):
-        for name, param in self.named_parameters():
-            if len(param.size()) > 1:
-                init.xavier_uniform_(param, gain=1)
+    def forward(self, input_data, hiddens):
+        '''
+        input_data : (seq_len, batchsize, input_dim)
+        '''
+        outputs, hiddens = self.lstm(input_data, hiddens)
+        # outputs: (seq_len, batch_size, num_directions* hidden_size)
+        pred = self.fc(outputs)
+        pred = self.sigmoid(pred)
+        return pred
 
 
 # RNN with gru or lstm
@@ -562,13 +562,13 @@ class RNN(nn.Module):
         return pred
 
 
-class CustomFcn(nn.Module):
-    def __init__(self, args):
-        super().__init__()
-        self.custom_module = conv2d_bn_relu(3, 3, 3)
-        self.fcn = torchvision.models.segmentation.fcn_resnet50()
-
-    def forward(self, img):
-        x = self.custom_module(img)
-        y = self.fcn(x)
-        return y
+# class CustomFcn(nn.Module):
+#     def __init__(self, args):
+#         super().__init__()
+#         self.custom_module = conv2d_bn_relu(3, 3, 3)
+#         self.fcn = torchvision.models.segmentation.fcn_resnet50()
+#
+#     def forward(self, img):
+#         x = self.custom_module(img)
+#         y = self.fcn(x)
+#         return y

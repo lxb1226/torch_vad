@@ -68,8 +68,8 @@ class Trainer:
                 self.logger.record_scalar(key, metrics[key])
 
             # only save img at first step
-            if i == len(self.train_loader) - 1:
-                self.logger.save_imgs(self.gen_imgs_to_write(img, pred, label, True), epoch)
+            # if i == len(self.train_loader) - 1:
+            #     self.logger.save_imgs(self.gen_imgs_to_write(img, pred, label, True), epoch)
 
             # monitor training progress
             if i % self.args.print_freq == 0:
@@ -78,24 +78,24 @@ class Trainer:
     def val_per_epoch(self, epoch):
         self.model.eval()
         for i, data in enumerate(self.val_loader):
-            img, pred, label = self.step(data)
+            audio, pred, label = self.step(data)
             metrics = self.compute_metrics(pred, label, is_train=False)
 
             for key in metrics.keys():
                 self.logger.record_scalar(key, metrics[key])
 
-            if i == len(self.val_loader) - 1:
-                self.logger.save_imgs(self.gen_imgs_to_write(img, pred, label, False), epoch)
+            # if i == len(self.val_loader) - 1:
+            #     self.logger.save_imgs(self.gen_imgs_to_write(img, pred, label, False), epoch)
 
     def step(self, data):
-        img, label = data
-        # warp input
-        img = Variable(img).cuda()
+        audio, label = data
+        audio = Variable(audio).cuda()
         label = Variable(label).cuda()
 
+
         # compute output
-        pred = self.model(img)
-        return img, pred, label
+        pred = self.model(audio)
+        return audio, pred, label
 
     def compute_metrics(self, pred, gt, is_train):
         # you can call functions in metrics.py
