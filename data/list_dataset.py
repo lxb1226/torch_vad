@@ -1,6 +1,7 @@
 from torch.utils.data import Dataset
-import cv2
+from utils.process_audio import convert_times_to_labels, extract_feature
 import numpy as np
+import librosa
 
 
 class ListDataset(Dataset):
@@ -11,21 +12,22 @@ class ListDataset(Dataset):
             data_list = args.train_list
         else:
             data_list = args.val_list
+        self.mel_args = args.mel_args
         infos = [line.split() for line in open(data_list).readlines()]
-        self.img_paths = [info[0] for info in infos]
-        self.label_paths = [infos[1] for info in infos]
+        self.audio_paths = [info[0] for info in infos]
+        self.audio_labels = [info[1:] for info in infos]
 
-    def preprocess(self, img, label):
-        # cv: h, w, c, tensor: c, h, w
-        img = img.transpose((2, 0, 1)).astype(np.float32)
+    def preprocess(self, audio, label):
         # you can add other process method or augment here
-        return img, label
+        features = extract_feature(audio, mel_args = self.mel_args)
+        labels = convert_times_to_labels(label)
+        return features, labels
 
     def __len__(self):
         return len(self.img_paths)
 
     def __getitem__(self, idx):
-        img = cv2.imread(self.img_paths[idx])
-        label = cv2.imread(self.label_paths[idx])
-        img, label = self.preprocess(img, label)
-        return img, label
+        data, _ = librosa.load(self.audio_paths[idx], sr=8000)
+        label = self.audio_labels[idx]
+        data, labels = self.preprocess(data, label)
+        return data, label

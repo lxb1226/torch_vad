@@ -1,5 +1,36 @@
-# TorchBase
+# torch_vad
 
-This is a project about how to do nn experiments methodically with pytorch.
+## 目录树
 
-More instruction: [如何让炼丹更有条理](https://github.com/ahangchen/windy-afternoon/blob/master/ml/pratice/torch_best_practice.md)
+## 数据集
+该数据集来源于。
+对数据集的增强需要对随机的音频段加不同的噪声，同时也需要在音频段之间加入不同的噪声段。
+目前只做到了第一点。后续需要完成第二点。
+标签来源于使用Datadriven_GPVAD对纯净语音的预测而生成的标签。
+### 训练集的构建
+    
+### 测试集的构建
+
+## 网络模型
+### DNN
+1. 输入/输出
+   13维mfcc特征以及1维能量作为输入
+   1/0:1表示语音段，0表示无声段
+2. 模型结构
+    DNN模型图[]
+3. 仿真效果
+    在见过的噪声上：
+    在未见过的噪声上：
+### CNN
+1. 输入/输出
+2. 模型结构
+3. 仿真效果
+### RNN/LSTM
+1. 输入/输出
+2. 模型结构
+3. 仿真效果
+## 评估指标
+
+
+
+
