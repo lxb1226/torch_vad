@@ -26,7 +26,7 @@ class Trainer:
 
         self.model = select_model(args)
         if args.load_model_path != '':
-            print("=> using pre-trained weights for DPSNet")
+            print("=> using pre-trained weights for VAD")
             if args.load_not_strict:
                 load_match_dict(self.model, args.load_model_path)
             else:

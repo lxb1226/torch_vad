@@ -79,7 +79,7 @@ class RruVAD(nn.Module):
 
 
 class LstmVAD(nn.Module):
-    def __init__(self):
+    def __init__(self, input_dim, hidden_size):
         super(LstmVAD, self).__init__()
 
         self.rnn = LSTM(input_size=24, hidden_size=20, num_layers=1, batch_first=True)

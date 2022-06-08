@@ -13,6 +13,12 @@ def parse_common_args(parser):
                         help='val list in train, test list path in test')
     parser.add_argument('--gpus', nargs='+', type=int)
     parser.add_argument('--seed', type=int, default=1234)
+
+    parser.add_argument('--sample_rate', type=int, default=8000)
+    parser.add_argument('--win_len', default=10, type=float, help='FFT duration in ms')
+    parser.add_argument('--hop_len', default=5, type=float, help='hop duration in ms')
+    parser.add_argument('--n_fft', default=2048, type=int)
+    parser.add_argument('--n_mels', default=12, type=int)
     return parser
 
 
@@ -26,9 +32,11 @@ def parse_train_args(parser):
     parser.add_argument('--weight-decay', '--wd', default=0, type=float,
                         metavar='W', help='weight decay')
     parser.add_argument('--model_dir', type=str, default='', help='leave blank, auto generated')
-    parser.add_argument('--train_list', type=str, default='/data/dataset1/list/base/train.txt')
+    # TODO 待修改
+    parser.add_argument('--train_list', type=str, default='../../data/dataset1/list/base/train.txt')
     parser.add_argument('--batch_size', type=int, default=16)
     parser.add_argument('--epochs', type=int, default=100)
+
     return parser
 
 
