@@ -1,17 +1,36 @@
-import csv
-import time
 
 import torch
 import torch.nn.functional as F
 import torch.optim
 import torch.utils.data
 from torch.autograd import Variable
+from loguru import logger
 
 from data.data_entry import select_train_loader, select_eval_loader
 from model.model_entry import select_model
 from options import prepare_train_args
 from utils.logger import Logger
 from utils.torch_utils import load_match_dict
+
+
+def gen_imgs_to_write(img, pred, label, is_train):
+    # override this method according to your visualization
+    prefix = 'train/' if is_train else 'val/'
+    return {
+        prefix + 'img': img[0],
+        prefix + 'pred': pred[0],
+        prefix + 'label': label[0]
+    }
+
+
+def compute_metrics(pred, gt, is_train):
+    # you can call functions in metrics.py
+    l1 = (pred - gt).abs().mean()
+    prefix = 'train/' if is_train else 'val/'
+    metrics = {
+        prefix + 'l1': l1
+    }
+    return metrics
 
 
 class Trainer:
@@ -32,7 +51,7 @@ class Trainer:
             else:
                 self.model.load_state_dict(torch.load(args.load_model_path).state_dict())
 
-        self.model = torch.nn.DataParallel(self.model)
+        # self.model = torch.nn.DataParallel(self.model)
         self.optimizer = torch.optim.Adam(self.model.parameters(), self.args.lr,
                                           betas=(self.args.momentum, self.args.beta),
                                           weight_decay=self.args.weight_decay)
@@ -48,12 +67,13 @@ class Trainer:
     def train_per_epoch(self, epoch):
         # switch to train mode
         self.model.train()
-
+        logger.debug('len of train data : {}'.format(len(self.train_loader)))
         for i, data in enumerate(self.train_loader):
-            img, pred, label = self.step(data)
+            logger.debug('i : {}'.format(i))
+            audio, pred, label = self.step(data)
 
             # compute loss
-            metrics = self.compute_metrics(pred, label, is_train=True)
+            metrics = compute_metrics(pred, label, is_train=True)
 
             # get the item for backward
             loss = metrics['train/l1']
@@ -79,7 +99,7 @@ class Trainer:
         self.model.eval()
         for i, data in enumerate(self.val_loader):
             audio, pred, label = self.step(data)
-            metrics = self.compute_metrics(pred, label, is_train=False)
+            metrics = compute_metrics(pred, label, is_train=False)
 
             for key in metrics.keys():
                 self.logger.record_scalar(key, metrics[key])
@@ -92,28 +112,9 @@ class Trainer:
         audio = Variable(audio).cuda()
         label = Variable(label).cuda()
 
-
         # compute output
         pred = self.model(audio)
         return audio, pred, label
-
-    def compute_metrics(self, pred, gt, is_train):
-        # you can call functions in metrics.py
-        l1 = (pred - gt).abs().mean()
-        prefix = 'train/' if is_train else 'val/'
-        metrics = {
-            prefix + 'l1': l1
-        }
-        return metrics
-
-    def gen_imgs_to_write(self, img, pred, label, is_train):
-        # override this method according to your visualization
-        prefix = 'train/' if is_train else 'val/'
-        return {
-            prefix + 'img': img[0],
-            prefix + 'pred': pred[0],
-            prefix + 'label': label[0]
-        }
 
     def compute_loss(self, pred, gt):
         if self.args.loss == 'l1':

@@ -6,17 +6,17 @@ def parse_common_args(parser):
     parser.add_argument('--model_type', type=str, default='dnn_vad', help='used in model_entry.py')
     parser.add_argument('--data_type', type=str, default='list', help='used in data_entry.py')
     parser.add_argument('--save_prefix', type=str, default='pref', help='some comment for model or test result dir')
-    parser.add_argument('--load_model_path', type=str, default='checkpoints/base_model_pref/0.pth',
+    parser.add_argument('--load_model_path', type=str, default='',
                         help='model path for pretrain or test')
     parser.add_argument('--load_not_strict', action='store_true', help='allow to load only common state dicts')
-    parser.add_argument('--val_list', type=str, default='../../data/wav_lists/val.txt',
+    parser.add_argument('--val_list', type=str, default='../../data/labels/val_labels.txt',
                         help='val list in train, test list path in test')
     parser.add_argument('--gpus', nargs='+', type=int)
     parser.add_argument('--seed', type=int, default=1234)
 
     parser.add_argument('--sample_rate', type=int, default=8000)
     parser.add_argument('--win_len', default=10, type=int, help='FFT duration in ms')
-    parser.add_argument('--hop_len', default=5, type=int, help='hop duration in ms')
+    parser.add_argument('--win_hop', default=5, type=int, help='hop duration in ms')
     parser.add_argument('--n_fft', default=2048, type=int)
     parser.add_argument('--n_mels', default=12, type=int)
     return parser
@@ -33,8 +33,8 @@ def parse_train_args(parser):
                         metavar='W', help='weight decay')
     parser.add_argument('--model_dir', type=str, default='', help='leave blank, auto generated')
     parser.add_argument('--loss', type=str, default='ce', help='loss function')
-    parser.add_argument('--train_list', type=str, default='../../data/wav_lists/train.txt')
-    parser.add_argument('--batch_size', type=int, default=16)
+    parser.add_argument('--train_list', type=str, default='../../data/labels/train_labels.txt')
+    parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--epochs', type=int, default=20)
 
     return parser
@@ -64,7 +64,8 @@ def get_test_args():
 def get_train_model_dir(args):
     model_dir = os.path.join('checkpoints', args.model_type + '_' + args.save_prefix)
     if not os.path.exists(model_dir):
-        os.system('mkdir -p ' + model_dir)
+        os.makedirs(model_dir)
+        # os.system('mkdir -p ' + model_dir)
     args.model_dir = model_dir
 
 
@@ -74,7 +75,8 @@ def get_test_result_dir(args):
     val_info = os.path.basename(os.path.dirname(args.val_list)) + '_' + os.path.basename(args.val_list.replace('.txt', ''))
     result_dir = os.path.join(model_dir, val_info + '_' + args.save_prefix)
     if not os.path.exists(result_dir):
-        os.system('mkdir -p ' + result_dir)
+        os.makedirs(result_dir)
+        # os.system('mkdir -p ' + result_dir)
     args.result_dir = result_dir
 
 
