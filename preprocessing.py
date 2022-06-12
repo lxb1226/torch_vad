@@ -27,6 +27,7 @@ def extract_feature(audio_path, label, sr=8000, win_len=0.032, win_hop=0.008):
     # 将特征 + 能量 保存到文件中
     return label, frame_feats
 
+
 def pre_process_data(data_list, feat_path, json_path):
     lbl_dict = {}
     with open(data_list, 'r') as f:
@@ -48,7 +49,6 @@ def pre_process_data(data_list, feat_path, json_path):
         json_file.write(json_str)
 
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='Run LSTM for VAD')
@@ -67,7 +67,6 @@ if __name__ == "__main__":
     parser.add_argument('--data_list', default=r'F:\workspace\GHT\projects\vad\data\labels\train_labels.txt')
     parser.add_argument('--val_list', default=r'F:\workspace\GHT\projects\vad\data\labels\val_labels.txt')
 
-
     args = parser.parse_args()
     data_path = args.data_path
     # 数据集存放路径
@@ -84,7 +83,6 @@ if __name__ == "__main__":
     train_labels_path = os.path.join(labels_path, r'train_lbl_dict.json')
     val_labels_path = os.path.join(labels_path, r'val_lbl_dict.json')
 
-
     if not os.path.exists(feat_path):
         os.mkdir(feat_path)
     for path in [train_feat_path, val_feat_path]:
@@ -94,12 +92,3 @@ if __name__ == "__main__":
     # 预处理数据集
     pre_process_data(args.data_list, train_feat_path, train_labels_path)
     pre_process_data(args.val_list, val_feat_path, val_labels_path)
-    
-
-
-
-
-
-    
-
-

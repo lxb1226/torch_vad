@@ -37,23 +37,30 @@ class DnnVAD(nn.Module):
         self.last = nn.Linear(32, output_dim)
 
     def forward(self, x):
+        """
+        :param x: [batch_size, seq_len, input_dim]
+        :return: out: [batch_size, seq_len, output_dim]
+        """
+        # TODO: 这里的batch_size 仅支持为1，因为这里一次训练是一条音频数据，后续可以考虑更改数据的存储方式来进行修改
+        x = x.squeeze(dim=0)
         out = F.relu(self.bn1((self.fc1(x))))
         out = F.relu(self.bn2((self.fc2(out))))
         out = F.relu(self.bn3((self.fc3(out))))
-
         out = self.last(out)
+        out = out.unsqueeze(dim=0)
+
         return out
 
 
 class RnnVAD(nn.Module):
-    def __init__(self, input_dim, hidden_size, output_dim=2, num_layers=1, bidirectional=True):
+    def __init__(self, input_dim, hidden_size, output_dim=2, num_layers=1, bidirectional=True, use_gpu=True):
         super(RnnVAD, self).__init__()
         self.hidden_size = hidden_size
         self.input_dim = input_dim
         self.num_layers = num_layers
         self.num_directions = 2 if bidirectional else 1  # 双向2 单向1
 
-        self.hidden = self.init_hiddens()
+        self.hidden = self.init_hiddens(use_gpu=use_gpu)
 
         self.gru = nn.GRU(input_size=input_dim,
                           hidden_size=hidden_size, num_layers=self.num_layers, bias=True, batch_first=False,
@@ -62,19 +69,21 @@ class RnnVAD(nn.Module):
                             out_features=output_dim, bias=True)
         self.sigmoid = nn.Sigmoid()
 
-    def init_hiddens(self):
+    def init_hiddens(self, batch_size=1, use_gpu=True):
         # hidden state should be (num_layers*num_directions, batch_size, hidden_size)
         # returns a hidden state and a cell state
-        hidden = torch.rand(self.num_layers * self.num_directions, 1, self.hidden_size)
-        return hidden
+        if use_gpu:
+            return torch.rand(self.num_layers * self.num_directions, 1, self.hidden_size).cuda()
+        return torch.rand(self.num_layers * self.num_directions, 1, self.hidden_size)
 
     def forward(self, input_data):
-        '''
-        input_data : [batch_size, seq_len, input_dim]
-        '''
+        """
+        :param input_data: [batch_size, seq_len, input_dim]
+        :return: pred : [batch_size, seq_len, output_dim]
+        """
 
         inp = torch.permute(input_data, (1, 0, 2))
-        outputs, hiddens = self.gru(inp, self.hidden)
+        outputs, _ = self.gru(inp, self.hidden)
         # outputs: (seq_len, batch_size, num_directions* hidden_size)
         outputs = outputs.permute(1, 0, 2)
         pred = self.fc(outputs)
@@ -84,13 +93,6 @@ class RnnVAD(nn.Module):
 
 
 # GRU模型
-'''
-
-该模型以[30, 24]维的数据作为输入。其中30代表帧数，24代表每帧的特征点数
-最终输出[30, 1]的数据。即针对每帧输出一个结果
-'''
-
-
 class RruVAD(nn.Module):
     def __init__(self):
         super(RruVAD, self).__init__()
@@ -110,19 +112,14 @@ class RruVAD(nn.Module):
 
 
 # LSTM模型
-'''
-
-'''
-
-
 class LstmVAD(nn.Module):
-    def __init__(self, input_dim, hidden_size, num_layers):
+    def __init__(self, input_dim, hidden_size, num_layers, use_gpu=True):
         super(LstmVAD, self).__init__()
         self.hidden_size = hidden_size
         self.input_dim = input_dim
         self.num_layers = num_layers
 
-        self.hidden = self.init_hiddens()
+        self.hidden = self.init_hiddens(use_gpu=use_gpu)
 
         self.lstm = nn.LSTM(input_size=input_dim,
                             hidden_size=hidden_size, num_layers=num_layers, bias=True, batch_first=False,
@@ -131,19 +128,21 @@ class LstmVAD(nn.Module):
                             out_features=2, bias=True)
         self.sigmoid = nn.Sigmoid()
 
-    def init_hiddens(self):
+    def init_hiddens(self, batch_size=1, use_gpu=True):
         # hidden state should be (num_layers*num_directions, batch_size, hidden_size)
         # returns a hidden state and a cell state
-        hidden = torch.rand(self.num_layers * self.num_directions, 1, self.hidden_size)
-        return hidden
+        if use_gpu:
+            return (torch.rand(size=(self.num_layers * 2, batch_size, self.hidden_size)).cuda(),) * 2
+        return (torch.rand(size=(self.num_layers * 2, batch_size, self.hidden_size)),) * 2
 
     def forward(self, input_data):
-        '''
-        input_data : (seq_len, batchsize, input_dim)
-        '''
+        """
+        :param input_data: [batch_size, seq_len, input_dim]
+        :return: pred : [batch_size, seq_len, output_dim]
+        """
         inp = torch.permute(input_data, (1, 0, 2))
-        outputs, hiddens = self.gru(inp, self.hidden)
-        # outputs: (seq_len, batch_size, num_directions* hidden_size)
+        outputs, _ = self.lstm(inp, self.hidden)
+
         outputs = outputs.permute(1, 0, 2)
         pred = self.fc(outputs)
         pred = self.sigmoid(pred)

@@ -12,8 +12,8 @@ def parse_common_args(parser):
     parser.add_argument('--val_list', type=str, default=r'F:\workspace\GHT\projects\vad\data\feat\val_feats.txt',
                         help='val list in train, test list path in test')
     parser.add_argument('--val_label_list', type=str, default=r'F:\workspace\GHT\projects\vad\data\labels'
-                                                                r'\val_lbl_dict.json')
-    parser.add_argument('--gpus', nargs='+', type=int)
+                                                              r'\val_lbl_dict.json')
+    parser.add_argument('--gpus', nargs='+', type=int, default=0)
     parser.add_argument('--seed', type=int, default=1234)
 
     parser.add_argument('--sample_rate', type=int, default=8000)
@@ -45,7 +45,7 @@ def parse_train_args(parser):
     parser.add_argument('--train_label_list', type=str, default=r'F:\workspace\GHT\projects\vad\data\labels'
                                                                 r'\train_lbl_dict.json')
     parser.add_argument('--batch_size', type=int, default=1)
-    parser.add_argument('--epochs', type=int, default=20)
+    parser.add_argument('--epochs', type=int, default=5)
 
     return parser
 
@@ -82,7 +82,8 @@ def get_train_model_dir(args):
 def get_test_result_dir(args):
     ext = os.path.basename(args.load_model_path).split('.')[-1]
     model_dir = args.load_model_path.replace(ext, '')
-    val_info = os.path.basename(os.path.dirname(args.val_list)) + '_' + os.path.basename(args.val_list.replace('.txt', ''))
+    val_info = os.path.basename(os.path.dirname(args.val_list)) + '_' + os.path.basename(
+        args.val_list.replace('.txt', ''))
     result_dir = os.path.join(model_dir, val_info + '_' + args.save_prefix)
     if not os.path.exists(result_dir):
         os.makedirs(result_dir)
