@@ -1,46 +1,31 @@
-import librosa
-import spafe.features.mfcc as mfcc
-import spafe.utils.preprocessing as preprocess
-from torch.utils.data import Dataset
+import json
 
-from utils.process_audio import parse_vad_label
+import numpy as np
+import torch
+from torch.utils.data import Dataset
 
 
 class ListDataset(Dataset):
-    def __init__(self, args, is_train):
+    def __init__(self, data_list, label_list):
         # usually we need args rather than single datalist to init the dataset
         super(ListDataset, self).__init__()
-        if is_train:
-            data_list = args.train_list
-        else:
-            data_list = args.val_list
-        self.sr = args.sample_rate
-        self.win_len = args.win_len
-        self.n_mels = args.n_mels
-        self.win_hop = args.win_hop
 
-        infos = [line.split() for line in open(data_list).readlines()]
-        self.audio_paths = [info[0] for info in infos]
-        self.audio_labels = [info[1:] for info in infos]
+        infos = [line.strip() for line in open(data_list).readlines()]
+        self.audio_paths = infos
+        with open(label_list, 'r') as f:
+            self.labels = json.load(f)
 
-    def preprocess(self, audio, label):
-        # you can add other process method or augment here
-        # 分帧
-        audio_framed, frame_len = preprocess.framing(audio, fs=self.sr, win_len=self.win_len / 1000,
-                                                     win_hop=self.win_hop / 1000)
-
-        # 提取mfcc特征 前[0:n_mels]个特征点
-        features = mfcc.mfcc(audio_framed, fs=self.sr, win_len=self.win_len / 1000, win_hop=self.win_hop / 1000)[
-                   : self.n_mels]
-        # 提取label
-        labels = parse_vad_label(label)
-        return features, labels
+    @staticmethod
+    def get_audio_id(audio_path) -> str:
+        return audio_path.strip().split('\\')[-1].split('.')[0]
 
     def __len__(self):
         return len(self.audio_paths)
 
     def __getitem__(self, idx):
-        data, _ = librosa.load(self.audio_paths[idx], sr=self.sr)
-        label = self.audio_labels[idx]
-        data, labels = self.preprocess(data, label)
-        return data, label
+        audio_data = np.load(self.audio_paths[idx])
+        audio_path = self.audio_paths[idx]
+        label = self.labels[self.get_audio_id(audio_path)]
+        audio_data = torch.from_numpy(audio_data).float()
+        label = torch.tensor(label).float()
+        return audio_data, label

@@ -1,6 +1,7 @@
 
 import torch
 import torch.nn.functional as F
+from torch.nn import CrossEntropyLoss, BCELoss
 import torch.optim
 import torch.utils.data
 from torch.autograd import Variable
@@ -23,12 +24,16 @@ def gen_imgs_to_write(img, pred, label, is_train):
     }
 
 
+# TODO(heyjude): 补充需要计算的评估指标，补充输入输出的维度
 def compute_metrics(pred, gt, is_train):
     # you can call functions in metrics.py
-    l1 = (pred - gt).abs().mean()
+    # pred = torch.argmax(pred, dim=1)
+    # loss = CrossEntropyLoss(pred, gt)
+    loss = torch.nn.functional.cross_entropy(pred, gt.long())
+
     prefix = 'train/' if is_train else 'val/'
     metrics = {
-        prefix + 'l1': l1
+        prefix + 'ce': loss
     }
     return metrics
 
@@ -69,14 +74,16 @@ class Trainer:
         self.model.train()
         logger.debug('len of train data : {}'.format(len(self.train_loader)))
         for i, data in enumerate(self.train_loader):
-            logger.debug('i : {}'.format(i))
+            # pred : [batch_size, seq_len, output_dim]
             audio, pred, label = self.step(data)
 
             # compute loss
+            pred = pred.squeeze(dim=0)
+            label = label.squeeze(dim=0)
             metrics = compute_metrics(pred, label, is_train=True)
 
             # get the item for backward
-            loss = metrics['train/l1']
+            loss = metrics['train/ce']
 
             # compute gradient and do Adam step
             self.optimizer.zero_grad()
@@ -108,9 +115,10 @@ class Trainer:
             #     self.logger.save_imgs(self.gen_imgs_to_write(img, pred, label, False), epoch)
 
     def step(self, data):
+        # audio : [batch_size, seq_len, input_dim]
+        # label : [batch_size, seq_len]
+        # TODO:补充输入输出的维度
         audio, label = data
-        audio = Variable(audio).cuda()
-        label = Variable(label).cuda()
 
         # compute output
         pred = self.model(audio)

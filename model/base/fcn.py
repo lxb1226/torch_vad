@@ -23,9 +23,9 @@ OBJ_CUDA = torch.cuda.is_available()
 
 
 class DnnVAD(nn.Module):
-    def __init__(self) -> None:
+    def __init__(self, input_dim=14, output_dim=2) -> None:
         super().__init__()
-        self.fc1 = nn.Linear(12, 32)
+        self.fc1 = nn.Linear(input_dim, 32)
         self.bn1 = nn.BatchNorm1d(32)
 
         self.fc2 = nn.Linear(32, 32)
@@ -34,7 +34,7 @@ class DnnVAD(nn.Module):
         self.fc3 = nn.Linear(32, 32)
         self.bn3 = nn.BatchNorm1d(32)
 
-        self.last = nn.Linear(32, 2)
+        self.last = nn.Linear(32, output_dim)
 
     def forward(self, x):
         out = F.relu(self.bn1((self.fc1(x))))
@@ -43,6 +43,44 @@ class DnnVAD(nn.Module):
 
         out = self.last(out)
         return out
+
+
+class RnnVAD(nn.Module):
+    def __init__(self, input_dim, hidden_size, output_dim=2, num_layers=1, bidirectional=True):
+        super(RnnVAD, self).__init__()
+        self.hidden_size = hidden_size
+        self.input_dim = input_dim
+        self.num_layers = num_layers
+        self.num_directions = 2 if bidirectional else 1  # 双向2 单向1
+
+        self.hidden = self.init_hiddens()
+
+        self.gru = nn.GRU(input_size=input_dim,
+                          hidden_size=hidden_size, num_layers=self.num_layers, bias=True, batch_first=False,
+                          bidirectional=bidirectional)
+        self.fc = nn.Linear(in_features=self.num_directions * hidden_size,
+                            out_features=output_dim, bias=True)
+        self.sigmoid = nn.Sigmoid()
+
+    def init_hiddens(self):
+        # hidden state should be (num_layers*num_directions, batch_size, hidden_size)
+        # returns a hidden state and a cell state
+        hidden = torch.rand(self.num_layers * self.num_directions, 1, self.hidden_size)
+        return hidden
+
+    def forward(self, input_data):
+        '''
+        input_data : [batch_size, seq_len, input_dim]
+        '''
+
+        inp = torch.permute(input_data, (1, 0, 2))
+        outputs, hiddens = self.gru(inp, self.hidden)
+        # outputs: (seq_len, batch_size, num_directions* hidden_size)
+        outputs = outputs.permute(1, 0, 2)
+        pred = self.fc(outputs)
+        pred = self.sigmoid(pred)
+        # pred : [batch_size, seq_len, output_dim]
+        return pred
 
 
 # GRU模型
@@ -83,26 +121,33 @@ class LstmVAD(nn.Module):
         self.hidden_size = hidden_size
         self.input_dim = input_dim
         self.num_layers = num_layers
+
+        self.hidden = self.init_hiddens()
+
         self.lstm = nn.LSTM(input_size=input_dim,
                             hidden_size=hidden_size, num_layers=num_layers, bias=True, batch_first=False,
                             bidirectional=True)
         self.fc = nn.Linear(in_features=2 * hidden_size,
-                            out_features=1, bias=True)
+                            out_features=2, bias=True)
         self.sigmoid = nn.Sigmoid()
 
-    def init_hiddens(self, batch_size):
+    def init_hiddens(self):
         # hidden state should be (num_layers*num_directions, batch_size, hidden_size)
         # returns a hidden state and a cell state
-        return (torch.rand(size=(self.num_layers * 2, batch_size, self.hidden_size)),) * 2
+        hidden = torch.rand(self.num_layers * self.num_directions, 1, self.hidden_size)
+        return hidden
 
-    def forward(self, input_data, hiddens):
+    def forward(self, input_data):
         '''
         input_data : (seq_len, batchsize, input_dim)
         '''
-        outputs, hiddens = self.lstm(input_data, hiddens)
+        inp = torch.permute(input_data, (1, 0, 2))
+        outputs, hiddens = self.gru(inp, self.hidden)
         # outputs: (seq_len, batch_size, num_directions* hidden_size)
+        outputs = outputs.permute(1, 0, 2)
         pred = self.fc(outputs)
         pred = self.sigmoid(pred)
+        # pred : [batch_size, seq_len, output_dim]
         return pred
 
 
@@ -523,52 +568,3 @@ class DenseNet(nn.Module):
         x = x.view(BATCH_SIZE, -1)
 
         return F.softmax(self.out(x), dim=1)
-
-
-class RNN(nn.Module):
-    def __init__(self, input_dim, hidden_size, num_layers=1, bidirectional=True, device="cpu"):
-        super(RNN, self).__init__()
-        self.hidden_size = hidden_size
-        self.input_dim = input_dim
-        self.num_layers = num_layers
-        self.num_directions = 2 if bidirectional else 1  # 双向2 单向1
-        self.device = device
-
-        self.gru = nn.GRU(input_size=input_dim,
-                          hidden_size=hidden_size, num_layers=self.num_layers, bias=True, batch_first=False,
-                          bidirectional=bidirectional)
-        self.fc = nn.Linear(in_features=self.num_directions * hidden_size,
-                            out_features=1, bias=True)
-        self.sigmoid = nn.Sigmoid()
-
-    def init_hiddens(self, batch_size):
-        # hidden state should be (num_layers*num_directions, batch_size, hidden_size)
-        # returns a hidden state and a cell state
-        hidden = torch.rand(self.num_layers * self.num_directions, batch_size, self.hidden_size)
-        return hidden
-
-    def forward(self, input_data):
-        '''
-        input_data : (seq_len, batchsize, input_dim)
-        '''
-        batch_size = input_data.size(1)
-
-        hiddens = self.init_hiddens(batch_size).to(self.device)  # 隐藏层h0
-        outputs, hiddens = self.gru(input_data, hiddens)
-        # outputs: (seq_len, batch_size, num_directions* hidden_size)
-
-        pred = self.fc(outputs)
-        pred = self.sigmoid(pred)  # 最后输出概率
-        return pred
-
-
-# class CustomFcn(nn.Module):
-#     def __init__(self, args):
-#         super().__init__()
-#         self.custom_module = conv2d_bn_relu(3, 3, 3)
-#         self.fcn = torchvision.models.segmentation.fcn_resnet50()
-#
-#     def forward(self, img):
-#         x = self.custom_module(img)
-#         y = self.fcn(x)
-#         return y

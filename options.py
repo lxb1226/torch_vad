@@ -3,14 +3,16 @@ import os
 
 
 def parse_common_args(parser):
-    parser.add_argument('--model_type', type=str, default='dnn_vad', help='used in model_entry.py')
+    parser.add_argument('--model_type', type=str, default='rnn_vad', help='used in model_entry.py')
     parser.add_argument('--data_type', type=str, default='list', help='used in data_entry.py')
     parser.add_argument('--save_prefix', type=str, default='pref', help='some comment for model or test result dir')
     parser.add_argument('--load_model_path', type=str, default='',
                         help='model path for pretrain or test')
     parser.add_argument('--load_not_strict', action='store_true', help='allow to load only common state dicts')
-    parser.add_argument('--val_list', type=str, default='../../data/labels/val_labels.txt',
+    parser.add_argument('--val_list', type=str, default=r'F:\workspace\GHT\projects\vad\data\feat\val_feats.txt',
                         help='val list in train, test list path in test')
+    parser.add_argument('--val_label_list', type=str, default=r'F:\workspace\GHT\projects\vad\data\labels'
+                                                                r'\val_lbl_dict.json')
     parser.add_argument('--gpus', nargs='+', type=int)
     parser.add_argument('--seed', type=int, default=1234)
 
@@ -19,6 +21,12 @@ def parse_common_args(parser):
     parser.add_argument('--win_hop', default=5, type=int, help='hop duration in ms')
     parser.add_argument('--n_fft', default=2048, type=int)
     parser.add_argument('--n_mels', default=12, type=int)
+    parser.add_argument('--print_freq', type=int, default=50)
+
+    parser.add_argument('--input_dim', type=int, default=14)
+    parser.add_argument('--output_dim', type=int, default=2)
+    parser.add_argument('--hidden_size', type=int, default=128)
+    parser.add_argument('--num_layers', type=int, default=1)
     return parser
 
 
@@ -33,7 +41,9 @@ def parse_train_args(parser):
                         metavar='W', help='weight decay')
     parser.add_argument('--model_dir', type=str, default='', help='leave blank, auto generated')
     parser.add_argument('--loss', type=str, default='ce', help='loss function')
-    parser.add_argument('--train_list', type=str, default='../../data/labels/train_labels.txt')
+    parser.add_argument('--train_list', type=str, default=r'F:\workspace\GHT\projects\vad\data\feat\train_feats.txt')
+    parser.add_argument('--train_label_list', type=str, default=r'F:\workspace\GHT\projects\vad\data\labels'
+                                                                r'\train_lbl_dict.json')
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--epochs', type=int, default=20)
 
