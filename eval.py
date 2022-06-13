@@ -8,6 +8,7 @@ import numpy as np
 # import cv2
 import os
 
+
 # from utils.viz import label2rgb
 
 
@@ -50,18 +51,19 @@ class Evaluator:
     def viz_per_batch(self, img, pred, gt, step):
         # call functions in viz.py
         # here is an example about segmentation
-        img_np = img[0].cpu().numpy().transpose((1, 2, 0))
-        pred_np = label2rgb(pred[0].cpu().numpy())
-        gt_np = label2rgb(gt[0].cpu().numpy())
-        viz = np.concatenate([img_np, pred_np, gt_np], axis=1)
-        viz_path = os.path.join(self.args.result_dir, "%04d.jpg" % step)
-        cv2.imwrite(viz_path, viz)
-    
+        # img_np = img[0].cpu().numpy().transpose((1, 2, 0))
+        # pred_np = label2rgb(pred[0].cpu().numpy())
+        # gt_np = label2rgb(gt[0].cpu().numpy())
+        # viz = np.concatenate([img_np, pred_np, gt_np], axis=1)
+        # viz_path = os.path.join(self.args.result_dir, "%04d.jpg" % step)
+        # cv2.imwrite(viz_path, viz)
+        pass
+
     def step(self, data):
         img, label = data
         # warp input
-        img = Variable(img).cuda()
-        label = Variable(label).cuda()
+        # img = Variable(img).cuda()
+        # label = Variable(label).cuda()
 
         # compute output
         pred = self.model(img)

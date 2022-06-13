@@ -9,6 +9,24 @@ import numpy as np
 
 from utils.process_audio import parse_vad_label
 
+# 生成数据集
+"""
+如何生成数据集。
+目前训练集有3000条数据，验证集有1100条数据。
+拆分训练集为2500条数据，验证集500条数据，测试集1100条数据。
+
+对训练集进行增强。往数据集中随机添加不同分贝的噪声。见过的噪声集来源于noise-92wav
+1. 对于每一段音频，往其中几段中随机添加不同分贝的噪声。
+2. 生成了新的音频文件后，需要同步修改标签文件。新生成的音频文件命名为origin_file_noise.wav
+3. 新生成的数据的文件夹划分为train、val、test。其中测试集又包含了seen_noise、unseen_noise。
+4. 对于训练集和验证集，噪声集为noise-92wav。对于测试集，噪声来源为未见过的噪声集N101-N115 noises(raw, 16k, 16bit, mono)和见过的噪声集noise-92wav
+
+"""
+
+
+def generate_data():
+    pass
+
 
 def extract_feature(audio_path, label, sr=8000, win_len=0.032, win_hop=0.008):
     audio_data, _ = librosa.load(audio_path, sr=sr)

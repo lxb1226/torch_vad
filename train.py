@@ -1,4 +1,3 @@
-
 import torch
 import torch.nn.functional as F
 import torch.optim
@@ -10,6 +9,8 @@ from model.model_entry import select_model
 from options import prepare_train_args
 from utils.logger import Logger
 from utils.torch_utils import load_match_dict
+from metrics import compute_auc, compute_accuracy, compute_recall, compute_f1, compute_precision, compute_eer, \
+    compute_fpr_and_tpr
 
 
 def gen_imgs_to_write(img, pred, label, is_train):
@@ -23,15 +24,25 @@ def gen_imgs_to_write(img, pred, label, is_train):
 
 
 # TODO(heyjude): 补充需要计算的评估指标，补充输入输出的维度
-def compute_metrics(pred, gt, is_train):
-    # you can call functions in metrics.py
-    # pred = torch.argmax(pred, dim=1)
-    # loss = CrossEntropyLoss(pred, gt)
-    loss = torch.nn.functional.cross_entropy(pred, gt.long())
+def compute_metrics(pred, target, is_train):
+    """
+    :param pred: [seq_len, output_dim]
+    :param gt:  [seq_len]
+    :param is_train:
+    :return:
+    """
+    loss = torch.nn.functional.cross_entropy(pred, target.long())
 
     prefix = 'train/' if is_train else 'val/'
+    pred = torch.argmax(pred, dim=1).tolist()
+    target = target.tolist()
     metrics = {
-        prefix + 'ce': loss
+        prefix + 'ce': loss,
+        prefix + 'accu': compute_accuracy(target, pred),
+        prefix + 'recall': compute_recall(target, pred),
+        prefix + 'prec': compute_precision(target, pred),
+        prefix + 'auc': compute_auc(target, pred),
+        prefix + 'f1': compute_f1(target, pred),
     }
     return metrics
 
@@ -94,7 +105,6 @@ class Trainer:
             # logger record
             for key in metrics.keys():
                 self.logger.record_scalar(key, metrics[key])
-
 
             # only save img at first step
             # if i == len(self.train_loader) - 1:

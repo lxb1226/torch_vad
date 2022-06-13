@@ -3,7 +3,7 @@ import os
 
 
 def parse_common_args(parser):
-    parser.add_argument('--model_type', type=str, default='rnn_vad', help='used in model_entry.py')
+    parser.add_argument('--model_type', type=str, default='dnn_vad', help='used in model_entry.py')
     parser.add_argument('--data_type', type=str, default='list', help='used in data_entry.py')
     parser.add_argument('--save_prefix', type=str, default='pref', help='some comment for model or test result dir')
     parser.add_argument('--load_model_path', type=str, default='',
