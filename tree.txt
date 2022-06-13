@@ -1,0 +1,23 @@
+卷 学习 的文件夹 PATH 列表
+卷序列号为 8E94-D2B8
+F:.
+├─checkpoints           # 存放训练过程中的参数以及其他数据
+│  ├─dnn_vad_pref
+│  ├─lstm_vad_pref
+│  └─rnn_vad_pref
+├─data              # 用于构建数据集等操作的代码
+├─doc               # 项目文档
+├─model             # 模型代码
+│  ├─base
+│  ├─best
+│  ├─better
+│  ├─sota
+├─scripts           # 运行脚本
+├─tests             # 测试
+├─utils             # 存放工具函数
+|-eval.py           # 评估模型的代码
+|-loss.py           # 损失函数
+|-metrics.py        # 评估指标
+|-options.py        # 参数配置
+|-train.py          # 训练代码
+|-preprocessing.py  # 数据预处理
