@@ -90,8 +90,8 @@ class Trainer:
             audio, pred, label = self.step(data)
 
             # compute loss
-            pred = pred.squeeze(dim=0)
-            label = label.squeeze(dim=0)
+            # pred = pred.squeeze(dim=0)
+            # label = label.squeeze(dim=0)
             metrics = compute_metrics(pred, label, is_train=True)
 
             # get the item for backward
@@ -119,8 +119,8 @@ class Trainer:
         for i, data in enumerate(self.val_loader):
             audio, pred, label = self.step(data)
 
-            pred = pred.squeeze(dim=0)
-            label = label.squeeze(dim=0)
+            # pred = pred.squeeze(dim=0)
+            # label = label.squeeze(dim=0)
             metrics = compute_metrics(pred, label, is_train=False)
 
             for key in metrics.keys():
@@ -133,11 +133,13 @@ class Trainer:
         """
         :param data:
         :return:
-            audio: [batch_size, seq_len, input_dim]
-            label: [batch_size, seq_len]
-            pred: [batch_size, seq_len, output_dim]
+            audio: [batch_size, input_dim]
+            label: [batch_size]
+            pred: [batch_size, output_dim]
         """
         audio, label = data
+        audio = audio.squeeze(dim=0)  # remove batch_size = 1
+        label = label.squeeze(dim=0)
         audio = audio.to(self.device)
         label = label.to(self.device)
         # compute output

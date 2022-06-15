@@ -38,16 +38,14 @@ class DnnVAD(nn.Module):
 
     def forward(self, x):
         """
-        :param x: [batch_size, seq_len, input_dim]
-        :return: out: [batch_size, seq_len, output_dim]
+        :param x: [batch_size, input_dim]
+        :return: out: [batch_size, output_dim]
         """
-        # TODO: 这里的batch_size 仅支持为1，因为这里一次训练是一条音频数据，后续可以考虑更改数据的存储方式来进行修改
-        x = x.squeeze(dim=0)
+
         out = F.relu(self.bn1((self.fc1(x))))
         out = F.relu(self.bn2((self.fc2(out))))
         out = F.relu(self.bn3((self.fc3(out))))
         out = self.last(out)
-        out = out.unsqueeze(dim=0)
 
         return out
 
@@ -82,6 +80,7 @@ class RnnVAD(nn.Module):
         :return: pred : [batch_size, seq_len, output_dim]
         """
 
+        # TODO: check the correct in train.
         inp = torch.permute(input_data, (1, 0, 2))
         outputs, _ = self.gru(inp, self.hidden)
         # outputs: (seq_len, batch_size, num_directions* hidden_size)
