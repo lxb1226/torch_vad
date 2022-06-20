@@ -36,14 +36,29 @@ def convert_onnx(model, input_size, model_name):
                       output_names=['modelOutput'],  # the model's output names
                       dynamic_axes={'modelInput': {0: 'batch_size'},  # variable length axes
                                     'modelOutput': {0: 'batch_size'}})
-    print(" ")
     print('Model has been converted to ONNX')
 
 
+# 将训练好的参数转换为可以用C++代码加载的参数
+def convert_trace(model):
+    model.eval()
+    input_size = 14
+    example = torch.rand(1, input_size)
+    print(example.size())
+    pred = model(example)
+    print(pred)
+    traced_script_module = torch.jit.trace(model, example)
+    output = traced_script_module(torch.ones(1, 14))
+    print(output)
+    traced_script_module.save("traced_dnn_vad.pt")
+
+
 if __name__ == '__main__':
-    load_model_path = r"F:\workspace\GHT\projects\vad\code\torch_vad\checkpoints\dnn_vad_pref\02_000000.pth"
+    load_model_path = r"F:\workspace\GHT\projects\vad\code\torch_vad\checkpoints\dnn_vad_pref\19_000000.pth"
     model = DnnVAD()
     load_match_dict(model, load_model_path)
     input_size = 14
     model_name = "dnn_vad"
-    convert_onnx(model, 14, model_name)
+
+    convert_trace(model)
+    # convert_onnx(model, 14, model_name)

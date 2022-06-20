@@ -111,8 +111,13 @@ class Trainer:
             #     self.logger.save_imgs(self.gen_imgs_to_write(img, pred, label, True), epoch)
 
             # monitor training progress
+
             if i % self.args.print_freq == 0:
                 print('Train: Epoch {} batch {} Loss {}'.format(epoch, i, loss))
+
+            # if i == 4000:
+            #     print("i : {}".format(i))
+            #     break
 
     def val_per_epoch(self, epoch):
         self.model.eval()
