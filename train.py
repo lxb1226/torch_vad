@@ -23,7 +23,6 @@ def gen_imgs_to_write(img, pred, label, is_train):
     }
 
 
-# TODO(heyjude): 补充需要计算的评估指标，补充输入输出的维度
 def compute_metrics(pred, target, is_train):
     """
     :param pred: [seq_len, output_dim]
@@ -92,6 +91,8 @@ class Trainer:
             # compute loss
             # pred = pred.squeeze(dim=0)
             # label = label.squeeze(dim=0)
+            print(pred.size())
+            print(label.size())
             metrics = compute_metrics(pred, label, is_train=True)
 
             # get the item for backward

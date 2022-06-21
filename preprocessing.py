@@ -165,6 +165,18 @@ def pre_process_data(data_list, feat_path, json_path):
         json_file.write(json_str)
 
 
+def process_labels(filename):
+    with open(filename, 'r') as json_file:
+        lbl_json_dict = json.load(json_file)
+    new_lbl_json_dict = {}
+    for key, val in lbl_json_dict.items():
+        name = key.split("\\")[-1].replace(".wav", "")
+        new_lbl_json_dict[name] = val
+    json_str = json.dumps(new_lbl_json_dict)
+    with open(filename, 'w') as json_file:
+        json_file.write(json_str)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='Run LSTM for VAD')
@@ -179,10 +191,10 @@ if __name__ == "__main__":
     parser.add_argument('--stage', default=1, type=int)
     parser.add_argument('--L', default=5, type=int)  # adjust length in VACC calculation
     parser.add_argument('--model', default='VADNet', type=str)
-    parser.add_argument('--data_path', default=r'F:\workspace\GHT\projects\vad\data', type=str, help='data path')
+    parser.add_argument('--data_path', default=r'E:\workspace\GHT\vad\small_data', type=str, help='data path')
     parser.add_argument('--data_list', default=r'F:\workspace\GHT\projects\vad\data\labels\train_labels.txt')
     parser.add_argument('--val_list', default=r'F:\workspace\GHT\projects\vad\data\labels\val_labels.txt')
-    parser.add_argument('--noise_path', default=r"F:\workspace\GHT\projects\vad\data\noise")
+    parser.add_argument('--noise_path', default=r"E:\workspace\GHT\vad\data\noise")
 
     args = parser.parse_args()
     data_path = args.data_path
@@ -192,15 +204,15 @@ if __name__ == "__main__":
     test_path = os.path.join(data_path, "dataset", "test")
 
     # 提取的特征存放路径
-    feat_path = os.path.join(data_path, "feat")
+    feat_path = os.path.join(data_path, "feats")
     train_feat_path = os.path.join(feat_path, "train")
     val_feat_path = os.path.join(feat_path, "val")
     test_feat_path = os.path.join(feat_path, "test")
 
     # 标签存放路径
     labels_path = os.path.join(data_path, 'labels')
-    train_labels_path = os.path.join(labels_path, r'train_lbl_dict.json')
-    val_labels_path = os.path.join(labels_path, r'val_lbl_dict.json')
+    train_labels_file = os.path.join(labels_path, r'train_lbl_dict.json')
+    val_labels_file = os.path.join(labels_path, r'val_lbl_dict.json')
 
     if not os.path.exists(feat_path):
         os.mkdir(feat_path)
@@ -208,7 +220,7 @@ if __name__ == "__main__":
         if not os.path.exists(path):
             os.mkdir(path)
 
-    # 生成数据集
+        # 生成数据集
     # logger.info("start generate data")
     #
     # noise_path = args.noise_path
@@ -218,72 +230,50 @@ if __name__ == "__main__":
     # generate_data(train_path, seen_noise_path, train_path)
     # logger.info("start generate val dataset")
     # generate_data(val_path, seen_noise_path, val_path)
+    # logger.info("start generate test dataset")
     # origin_test_path = os.path.join(test_path, "origin_dataset")
     # seen_path = os.path.join(test_path, "seen_noise_dataset")
     # unseen_path = os.path.join(test_path, "unseen_noise_dataset")
+    #
+    # if not os.path.exists(seen_path):
+    #     os.mkdir(seen_path)
+    # if not os.path.exists(unseen_path):
+    #     os.mkdir(unseen_path)
     # generate_data(origin_test_path, seen_noise_path, seen_path)
     # logger.info("generate done!")
     # # TODO:暂时不考虑未见过的噪声
-    # # generate_data(origin_test_path, unseen_noise_path, unseen_path, noise_sr=16000)
-    #
-    # # 生成标签
-    # logger.info("start generate labels")
-    # new_train_labels_path = os.path.join(labels_path, "new_train_lbl_dict.json")
-    # new_val_labels_path = os.path.join(labels_path, "new_val_lbl_dict.json")
-    # generate_labels(train_labels_path, train_path, new_train_labels_path)
-    # generate_labels(val_labels_path, val_path, new_val_labels_path)
-    # logger.info("generate labels done!")
-    #
-    # # 生成特征
-    # logger.info("start generate feats")
-    # generate_feats(train_path, train_feat_path)
-    # generate_feats(val_path, val_feat_path)
-    # origin_test_path = os.path.join(test_path, "origin_dataset")
-    # origin_test_feat_path = os.path.join(test_feat_path, "origin_dataset")
-    # seen_test_path = os.path.join(test_path, "seen_noise_dataset")
-    # seen_test_feat_path = os.path.join(test_feat_path, "seen_noise_dataset")
-    # generate_feats(origin_test_path, origin_test_feat_path)
-    # generate_feats(seen_test_path, seen_test_feat_path)
-    # logger.info("generate feats done!")
+    # generate_data(origin_test_path, unseen_noise_path, unseen_path, noise_sr=16000)
 
-    # 预处理数据集
-    # pre_process_data(args.data_list, train_feat_path, train_labels_path)
-    # pre_process_data(args.val_list, val_feat_path, val_labels_path)
+    process_labels(train_labels_file)
+    process_labels(val_labels_file)
+    # 生成标签
+    logger.info("start generate labels")
+    new_train_labels_file = os.path.join(labels_path, "new_train_lbl_dict.json")
+    new_val_labels_file = os.path.join(labels_path, "new_val_lbl_dict.json")
+    generate_labels(train_labels_file, train_path, new_train_labels_file)
+    generate_labels(val_labels_file, val_path, new_val_labels_file)
+    logger.info("generate labels done!")
+
+    # 生成特征
+    logger.info("start generate feats")
+    generate_feats(train_path, train_feat_path)
+    generate_feats(val_path, val_feat_path)
+    origin_test_path = os.path.join(test_path, "origin_dataset")
+    origin_test_feat_path = os.path.join(test_feat_path, "origin_dataset")
+    seen_test_path = os.path.join(test_path, "seen_noise_dataset")
+    seen_test_feat_path = os.path.join(test_feat_path, "seen_noise_dataset")
+
+    paths = [origin_test_feat_path, seen_test_feat_path]
+    for path in paths:
+        if not os.path.exists(path):
+            os.mkdir(path)
+    generate_feats(origin_test_path, origin_test_feat_path)
+    generate_feats(seen_test_path, seen_test_feat_path)
+    logger.info("generate feats done!")
 
     # 生成文件
-    wav_list_path = r"F:\workspace\GHT\projects\vad\data\wav_lists"
     paths = [train_feat_path, val_feat_path]
     suffixs = ["train_feats.txt", "val_feats.txt"]
     for i in range(2):
-        path = os.path.join(wav_list_path, suffixs[i])
+        path = os.path.join(feat_path, suffixs[i])
         generate_list(paths[i], path)
-    #
-    # # 生成数据集
-    # # 生成训练集
-    # seen_noise_path = r"F:\workspace\GHT\projects\vad\data\noise\noisex-92wav"
-    # unseen_noise_path = r""
-    # generate_data(train_path, noise_path)
-    # generate_data(val_path, noise_path)
-    # origin_test_path = os.path.join(test_path, "origin_dataset")
-    # seen_path = os.path.join(test_path, "seen_noise_dataset")
-    # unseen_path = os.path.join(test_path, "unseen_noise_dataset")
-    # generate_data(origin_test_path, seen_noise_path, seen_path)
-    # generate_data(origin_test_path, unseen_noise_path, unseen_path, noise_sr=16000)
-
-    # delete_files(test_path)
-
-    # 生成标签
-    # new_train_labels_path = os.path.join(labels_path, "new_train_lbl_dict.json")
-    # new_val_labels_path = os.path.join(labels_path, "new_val_lbl_dict.json")
-    # generate_labels(train_labels_path, train_path, new_train_labels_path)
-    # generate_labels(val_labels_path, val_path, new_val_labels_path)
-
-    # 生成特征
-    # generate_feats(train_path, train_feat_path)
-    # generate_feats(val_path, val_feat_path)
-    # origin_test_path = os.path.join(test_path, "origin_dataset")
-    # origin_test_feat_path = os.path.join(test_feat_path, "origin_dataset")
-    # seen_test_path = os.path.join(test_path, "seen_noise_dataset")
-    # seen_test_feat_path = os.path.join(test_feat_path, "seen_noise_dataset")
-    # generate_feats(origin_test_path, origin_test_feat_path)
-    # generate_feats(seen_test_path, seen_test_feat_path)
