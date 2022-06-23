@@ -1,6 +1,9 @@
 import librosa
 import numpy as np
 
+import spafe.utils.preprocessing as preprocess
+import spafe.features.mfcc as mfcc
+
 
 def parse_vad_label(line, frame_size: float = 0.032, frame_shift: float = 0.008):
     """Parse VAD information in each line, and convert it to frame-wise VAD label.
@@ -108,16 +111,12 @@ def prediction_to_vad_label(
     return " ".join(speech_frames)
 
 
-def extract_feature(audio, mel_args):
-    # MEL_ARGS = {
-    #     'n_mels': ARGS.n_mels,
-    #     'n_fft': 2048,
-    #     'hop_length': int(ARGS.sr * ARGS.hoplen / 1000),
-    #     'win_length': int(ARGS.sr * ARGS.winlen / 1000)
-    # }
+def extract_feature(data, sr=8000, win_len=0.032, win_hop=0.008):
+    audio_framed, frame_len = preprocess.framing(data, fs=sr, win_len=win_len,
+                                                 win_hop=win_hop)
+    frame_energy = (audio_framed ** 2).sum(1)[:, np.newaxis]
+    frame_mfcc = mfcc.mfcc(data, fs=sr, win_len=win_len, win_hop=win_hop)
+    # 联结帧能量以及mfcc特征
+    frame_feats = np.concatenate((frame_energy, frame_mfcc), axis=1)
 
-    EPS = np.spacing(1)
-
-    lms_feature = np.log(librosa.feature.melspectrogram(audio, **mel_args) + EPS).T
-
-    return lms_feature
+    return frame_feats

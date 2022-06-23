@@ -10,7 +10,7 @@ import numpy as np
 import soundfile as sf
 from loguru import logger
 
-from utils.process_audio import parse_vad_label
+from utils.preprocess import parse_vad_label
 
 # 生成数据集
 """

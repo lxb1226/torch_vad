@@ -15,6 +15,7 @@ def parse_common_args(parser):
                                                               r'\small_val_lbl_dict.json')
     parser.add_argument('--gpus', nargs='+', type=int, default=0)
     parser.add_argument('--seed', type=int, default=1234)
+    parser.add_argument('--use_gpu', type=bool, default=False)
 
     parser.add_argument('--sample_rate', type=int, default=8000)
     parser.add_argument('--win_len', default=10, type=int, help='FFT duration in ms')
