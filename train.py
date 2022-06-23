@@ -138,9 +138,9 @@ class Trainer:
         """
         :param data:
         :return:
-            audio: [batch_size, input_dim]
-            label: [batch_size]
-            pred: [batch_size, output_dim]
+            audio: [seq_len, input_dim]
+            label: [seq_len]
+            pred: [seq_len, output_dim]
         """
         audio, label = data
         audio = audio.squeeze(dim=0)  # remove batch_size = 1

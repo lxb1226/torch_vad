@@ -76,18 +76,22 @@ class RnnVAD(nn.Module):
 
     def forward(self, input_data):
         """
-        :param input_data: [batch_size, seq_len, input_dim]
+        :param input_data: [seq_len, input_dim]
         :return: pred : [batch_size, seq_len, output_dim]
         """
 
         # TODO: check the correct in train.
-        inp = torch.permute(input_data, (1, 0, 2))
+        # inp = torch.permute(input_data, (1, 0, 2))
+        inp = torch.unsqueeze(input_data, 1)
         outputs, _ = self.gru(inp, self.hidden)
         # outputs: (seq_len, batch_size, num_directions* hidden_size)
         outputs = outputs.permute(1, 0, 2)
         pred = self.fc(outputs)
         pred = self.sigmoid(pred)
+        # remove batch_size
+        pred = torch.squeeze(pred, dim=0)
         # pred : [batch_size, seq_len, output_dim]
+
         return pred
 
 
@@ -139,12 +143,15 @@ class LstmVAD(nn.Module):
         :param input_data: [batch_size, seq_len, input_dim]
         :return: pred : [batch_size, seq_len, output_dim]
         """
-        inp = torch.permute(input_data, (1, 0, 2))
+        # inp = torch.permute(input_data, (1, 0, 2))
+        inp = torch.unsqueeze(input_data, 1)
         outputs, _ = self.lstm(inp, self.hidden)
-
+        # outputs: (seq_len, batch_size, num_directions* hidden_size)
         outputs = outputs.permute(1, 0, 2)
         pred = self.fc(outputs)
         pred = self.sigmoid(pred)
+        # remove batch_size
+        pred = torch.squeeze(pred, dim=0)
         # pred : [batch_size, seq_len, output_dim]
         return pred
 
