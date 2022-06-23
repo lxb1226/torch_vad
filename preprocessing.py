@@ -187,6 +187,7 @@ if __name__ == "__main__":
     parser.add_argument('--stage', default=1, type=int)
     parser.add_argument('--L', default=5, type=int)  # adjust length in VACC calculation
     parser.add_argument('--model', default='VADNet', type=str)
+
     parser.add_argument('--data_path', default=r'F:\workspace\GHT\projects\vad\small_data', type=str, help='data path')
     parser.add_argument('--data_list', default=r'F:\workspace\GHT\projects\vad\small_data\labels\train_labels.txt')
     parser.add_argument('--val_list', default=r'F:\workspace\GHT\projects\vad\small_data\labels\val_labels.txt')
@@ -200,15 +201,15 @@ if __name__ == "__main__":
     test_path = os.path.join(data_path, "dataset", "test")
 
     # 提取的特征存放路径
-    feat_path = os.path.join(data_path, "feat")
+    feat_path = os.path.join(data_path, "feats")
     train_feat_path = os.path.join(feat_path, "train")
     val_feat_path = os.path.join(feat_path, "val")
     test_feat_path = os.path.join(feat_path, "test")
 
     # 标签存放路径
     labels_path = os.path.join(data_path, 'labels')
-    train_labels_path = os.path.join(labels_path, r'train_lbl_dict.json')
-    val_labels_path = os.path.join(labels_path, r'val_lbl_dict.json')
+    train_labels_file = os.path.join(labels_path, r'train_lbl_dict.json')
+    val_labels_file = os.path.join(labels_path, r'val_lbl_dict.json')
 
     if not os.path.exists(feat_path):
         os.mkdir(feat_path)
@@ -242,11 +243,12 @@ if __name__ == "__main__":
     logger.info("start generate labels")
     new_train_labels_path = os.path.join(labels_path, "small_train_lbl_dict.json")
     new_val_labels_path = os.path.join(labels_path, "small_val_lbl_dict.json")
-    generate_labels(train_labels_path, train_path, new_train_labels_path)
-    generate_labels(val_labels_path, val_path, new_val_labels_path)
+    generate_labels(train_labels_file, train_path, new_train_labels_path)
+    generate_labels(val_labels_file, val_path, new_val_labels_path)
     logger.info("generate labels done!")
     #
-    # # 生成特征
+
+    # 生成特征
     logger.info("start generate feats")
     generate_feats(train_path, train_feat_path)
     generate_feats(val_path, val_feat_path)
@@ -254,13 +256,14 @@ if __name__ == "__main__":
     origin_test_feat_path = os.path.join(test_feat_path, "origin_dataset")
     seen_test_path = os.path.join(test_path, "seen_noise_dataset")
     seen_test_feat_path = os.path.join(test_feat_path, "seen_noise_dataset")
+
+    paths = [origin_test_feat_path, seen_test_feat_path]
+    for path in paths:
+        if not os.path.exists(path):
+            os.mkdir(path)
     generate_feats(origin_test_path, origin_test_feat_path)
     generate_feats(seen_test_path, seen_test_feat_path)
     logger.info("generate feats done!")
-
-    # 预处理数据集
-    # pre_process_data(args.data_list, train_feat_path, train_labels_path)
-    # pre_process_data(args.val_list, val_feat_path, val_labels_path)
 
     # 生成文件
     paths = [train_feat_path, val_feat_path]
@@ -268,4 +271,3 @@ if __name__ == "__main__":
     for i in range(2):
         path = os.path.join(feat_path, suffixs[i])
         generate_list(paths[i], path)
-

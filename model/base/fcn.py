@@ -51,7 +51,7 @@ class DnnVAD(nn.Module):
 
 
 class RnnVAD(nn.Module):
-    def __init__(self, input_dim, hidden_size, output_dim=2, num_layers=1, bidirectional=True, use_gpu=True):
+    def __init__(self, input_dim, hidden_size, output_dim=2, num_layers=1, bidirectional=True, use_gpu=False):
         super(RnnVAD, self).__init__()
         self.hidden_size = hidden_size
         self.input_dim = input_dim
@@ -116,7 +116,7 @@ class RruVAD(nn.Module):
 
 # LSTM模型
 class LstmVAD(nn.Module):
-    def __init__(self, input_dim, hidden_size, num_layers, use_gpu=True):
+    def __init__(self, input_dim, hidden_size, num_layers, use_gpu=False):
         super(LstmVAD, self).__init__()
         self.hidden_size = hidden_size
         self.input_dim = input_dim

@@ -41,10 +41,12 @@ def parse_train_args(parser):
                         metavar='W', help='weight decay')
     parser.add_argument('--model_dir', type=str, default='', help='leave blank, auto generated')
     parser.add_argument('--loss', type=str, default='ce', help='loss function')
+
     parser.add_argument('--train_list', type=str,
                         default=r'F:\workspace\GHT\projects\vad\small_data\feat\train_feats.txt')
     parser.add_argument('--train_label_list', type=str, default=r'F:\workspace\GHT\projects\vad\small_data\labels'
                                                                 r'\small_train_lbl_dict.json')
+
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--epochs', type=int, default=20)
 
