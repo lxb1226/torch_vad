@@ -2,6 +2,7 @@ import argparse
 import os
 import json
 import random
+import shutil
 
 import librosa
 import spafe.utils.preprocessing as preprocess
@@ -184,7 +185,7 @@ if __name__ == "__main__":
     parser.add_argument('--lr', default=0.001, type=float)
     parser.add_argument('--num_epoch', default=10, type=int)
     parser.add_argument('--report_interval', default=50, type=int)
-    parser.add_argument('--stage', default=1, type=int)
+    parser.add_argument('--stage', default=0, type=int)
     parser.add_argument('--L', default=5, type=int)  # adjust length in VACC calculation
     parser.add_argument('--model', default='VADNet', type=str)
 
@@ -199,75 +200,78 @@ if __name__ == "__main__":
     train_path = os.path.join(data_path, "dataset", "train")
     val_path = os.path.join(data_path, "dataset", "val")
     test_path = os.path.join(data_path, "dataset", "test")
+    origin_test_path = os.path.join(test_path, "origin_dataset")
+    seen_test_path = os.path.join(test_path, "seen_noise_dataset")
+    unseen_path = os.path.join(test_path, "unseen_noise_dataset")
 
     # 提取的特征存放路径
-    feat_path = os.path.join(data_path, "feats")
+    feat_path = os.path.join(data_path, "feat")
     train_feat_path = os.path.join(feat_path, "train")
     val_feat_path = os.path.join(feat_path, "val")
     test_feat_path = os.path.join(feat_path, "test")
+    origin_test_feat_path = os.path.join(test_feat_path, "origin_dataset")
+    seen_test_feat_path = os.path.join(test_feat_path, "seen_noise_dataset")
+    unseen_test_feat_path = os.path.join(test_feat_path, "unseen_noise_dataset")
 
     # 标签存放路径
     labels_path = os.path.join(data_path, 'labels')
     train_labels_file = os.path.join(labels_path, r'train_lbl_dict.json')
     val_labels_file = os.path.join(labels_path, r'val_lbl_dict.json')
 
+    # 创建文件夹
     if not os.path.exists(feat_path):
         os.mkdir(feat_path)
-    for path in [train_feat_path, val_feat_path, test_feat_path]:
-        if not os.path.exists(path):
-            os.mkdir(path)
-
-    # 删除生成的噪声文件
-    # delete_generate_wav(train_path)
-    # delete_generate_wav(val_path)
-
-    # 生成数据集
-    logger.info("start generate data")
-
-    noise_path = args.noise_path
-    seen_noise_path = os.path.join(noise_path, "noisex-92wav")
-    unseen_noise_path = r""
-    logger.info("start generate train dataset")
-    generate_data(train_path, seen_noise_path, train_path)
-    logger.info("start generate val dataset")
-    generate_data(val_path, seen_noise_path, val_path)
-    origin_test_path = os.path.join(test_path, "origin_dataset")
-    seen_path = os.path.join(test_path, "seen_noise_dataset")
-    unseen_path = os.path.join(test_path, "unseen_noise_dataset")
-    generate_data(origin_test_path, seen_noise_path, seen_path)
-    logger.info("generate done!")
-    # TODO:暂时不考虑未见过的噪声
-    # generate_data(origin_test_path, unseen_noise_path, unseen_path, noise_sr=16000)
-
-    # 生成标签
-    logger.info("start generate labels")
-    new_train_labels_path = os.path.join(labels_path, "small_train_lbl_dict.json")
-    new_val_labels_path = os.path.join(labels_path, "small_val_lbl_dict.json")
-    generate_labels(train_labels_file, train_path, new_train_labels_path)
-    generate_labels(val_labels_file, val_path, new_val_labels_path)
-    logger.info("generate labels done!")
-    #
-
-    # 生成特征
-    logger.info("start generate feats")
-    generate_feats(train_path, train_feat_path)
-    generate_feats(val_path, val_feat_path)
-    origin_test_path = os.path.join(test_path, "origin_dataset")
-    origin_test_feat_path = os.path.join(test_feat_path, "origin_dataset")
-    seen_test_path = os.path.join(test_path, "seen_noise_dataset")
-    seen_test_feat_path = os.path.join(test_feat_path, "seen_noise_dataset")
-
-    paths = [origin_test_feat_path, seen_test_feat_path]
+    paths = [train_feat_path, val_feat_path, test_feat_path, origin_test_feat_path, seen_test_feat_path,
+             unseen_test_feat_path]
     for path in paths:
         if not os.path.exists(path):
             os.mkdir(path)
-    generate_feats(origin_test_path, origin_test_feat_path)
-    generate_feats(seen_test_path, seen_test_feat_path)
-    logger.info("generate feats done!")
+
+    if args.stage == 0:
+        # 如果数据集是纯净的，那么需要添加噪声来生成数据集以及重新提取特征
+        # 生成数据集
+        logger.info("start generate data")
+
+        noise_path = args.noise_path
+        seen_noise_path = os.path.join(noise_path, "noisex-92wav")
+        unseen_noise_path = r""
+        logger.info("start generate train dataset")
+        generate_data(train_path, seen_noise_path, train_path)
+        logger.info("start generate val dataset")
+        generate_data(val_path, seen_noise_path, val_path)
+
+        generate_data(origin_test_path, seen_noise_path, seen_test_path)
+        logger.info("generate done!")
+        # TODO:暂时不考虑未见过的噪声
+        # generate_data(origin_test_path, unseen_noise_path, unseen_path, noise_sr=16000)
+
+        # 生成标签
+        logger.info("start generate labels")
+        new_train_labels_path = os.path.join(labels_path, "small_train_lbl_dict.json")
+        new_val_labels_path = os.path.join(labels_path, "small_val_lbl_dict.json")
+        generate_labels(train_labels_file, train_path, new_train_labels_path)
+        generate_labels(val_labels_file, val_path, new_val_labels_path)
+        logger.info("generate labels done!")
+
+        # 生成特征
+        logger.info("start generate feats")
+        generate_feats(train_path, train_feat_path)
+        generate_feats(val_path, val_feat_path)
+
+        generate_feats(origin_test_path, origin_test_feat_path)
+        generate_feats(seen_test_path, seen_test_feat_path)
+        logger.info("generate feats done!")
+    elif args.stage == 1:
+        # 删除生成的数据集
+        paths = [train_path, val_path, feat_path]
+        delete_generate_wav(train_path)
+        delete_generate_wav(val_path)
+        shutil.rmtree(feat_path)
 
     # 生成文件
     paths = [train_feat_path, val_feat_path]
     suffixs = ["train_feats.txt", "val_feats.txt"]
-    for i in range(2):
-        path = os.path.join(feat_path, suffixs[i])
-        generate_list(paths[i], path)
+    if os.path.exists(feat_path):
+        for i in range(2):
+            path = os.path.join(feat_path, suffixs[i])
+            generate_list(paths[i], path)

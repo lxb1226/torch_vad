@@ -1,7 +1,13 @@
-import numpy as np
+import librosa
 import matplotlib.pyplot as plt
 import seaborn as sns
-import librosa
+
+from .vad_utils import prediction_to_vad_label
+
+
+def show_result(data, labels, sr):
+    speech_times = prediction_to_vad_label(labels)
+    plot_wave_and_label(data, speech_times, sr)
 
 
 def plot_wave_and_label(data, speech_times, sr):
@@ -25,7 +31,7 @@ def plot_wave_and_label(data, speech_times, sr):
 
 
 if __name__ == '__main__':
-    audio_path = r'E:\workspace\GHT\vad\data\data\dataset\val\6411-58876-0056.wav'
+    audio_path = r'F:\workspace\GHT\projects\vad\data\dataset\val\6411-58876-0056.wav'
     speech_times = [[0.14, 3.76], [3.98, 5.80], [6.36, 11.06], [11.72, 12.82], [12.96, 15.36]]
     wav_data, sr = librosa.load(audio_path, sr=8000)
     plot_wave_and_label(wav_data, speech_times, sr)

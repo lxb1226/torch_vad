@@ -91,8 +91,8 @@ class Trainer:
             # compute loss
             # pred = pred.squeeze(dim=0)
             # label = label.squeeze(dim=0)
-            print(pred.size())
-            print(label.size())
+            # print(pred.size())
+            # print(label.size())
             metrics = compute_metrics(pred, label, is_train=True)
 
             # get the item for backward

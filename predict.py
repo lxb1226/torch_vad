@@ -6,10 +6,13 @@ import torch
 from model.model_entry import select_model
 from utils.preprocess import extract_feature
 from utils.torch_utils import load_match_dict
+from utils.viz import show_result
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--wav_path', type=str)
+    parser.add_argument('--wav_path', type=str, default=r'F:\workspace\GHT\projects\vad\code\torch_vad\wavs'
+                                                        r'\vad_test_src.wav')
+    parser.add_argument('--model_type', type=str, default='dnn_vad')
     parser.add_argument('--sample_rate', type=int, default=8000)
     parser.add_argument('--model_type', type=str, default='dnn_vad')
     parser.add_argument('--input_dim', type=int, default=14)
@@ -45,4 +48,4 @@ if __name__ == '__main__':
     print(label)
 
     # 画图
-    # label 转 time
+    show_result(data, label, sr)
